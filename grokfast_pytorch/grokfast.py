@@ -23,10 +23,12 @@ def spectral_entropy_reg_loss_hook(optimizer, *args, **kwargs):
     loss = torch.tensor(0.).requires_grad_()
 
     for param_group in optimizer.param_groups:
-        if not param['add_spectral_entropy_reg']:
+        if not param_group['add_spectral_entropy_reg']:
             continue
 
-        weight = param['spectral_entropy_reg_weight']
+        weight = param_group['spectral_entropy_reg_weight']
+        use_svd_lowrank = param_group['use_svd_lowrank']
+        svd_lowrank_kwargs = param_group['svd_lowrank_kwargs']
 
         for param in param_group['params']:
             if param.ndim < 2:
@@ -35,7 +37,11 @@ def spectral_entropy_reg_loss_hook(optimizer, *args, **kwargs):
             *_, row, col = param.shape
             reshaped_param = param.reshape(-1, row, col)
 
-            singular_values = torch.linalg.svdvals(reshaped_param)
+            if not use_svd_lowrank:
+                singular_values = torch.linalg.svdvals(reshaped_param)
+            else:
+                _, singular_values, _ = torch.svd_lowrank(reshaped_param, **svd_lowrank_kwargs)
+
             spectral_prob = singular_values.softmax(dim = -1)
             spectral_entropy = entropy(spectral_prob).sum()
             loss = loss + spectral_entropy
@@ -59,7 +65,9 @@ class GrokFastAdamW(Optimizer):
         grokfast_after_step = 0,
         normalize_lr = True,
         add_spectral_entropy_reg = False,
-        spectral_entropy_reg_weight = 0.1
+        spectral_entropy_reg_weight = 0.1,
+        use_svd_lowrank = False,
+        svd_lowrank_kwargs: dict = dict()
     ):
         assert lr > 0.
         assert all([0. <= beta <= 1. for beta in betas])
@@ -87,7 +95,9 @@ class GrokFastAdamW(Optimizer):
             grokfast_lamb = grokfast_lamb,
             grokfast_after_step = grokfast_after_step,
             add_spectral_entropy_reg = add_spectral_entropy_reg,
-            spectral_entropy_reg_weight = spectral_entropy_reg_weight
+            spectral_entropy_reg_weight = spectral_entropy_reg_weight,
+            use_svd_lowrank = use_svd_lowrank,
+            svd_lowrank_kwargs = svd_lowrank_kwargs
         )
 
         super().__init__(params, defaults)

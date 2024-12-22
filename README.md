@@ -65,10 +65,10 @@ opt.zero_grad()
 
 ```bibtex
 @misc{kumar2024maintaining,
-    title={Maintaining Plasticity in Continual Learning via Regenerative Regularization},
-    author={Saurabh Kumar and Henrik Marklund and Benjamin Van Roy},
-    year={2024},
-    url={https://openreview.net/forum?id=lyoOWX0e0O}
+    title   = {Maintaining Plasticity in Continual Learning via Regenerative Regularization},
+    author  = {Saurabh Kumar and Henrik Marklund and Benjamin Van Roy},
+    year    = {2024},
+    url     = {https://openreview.net/forum?id=lyoOWX0e0O}
 }
 ```
 
